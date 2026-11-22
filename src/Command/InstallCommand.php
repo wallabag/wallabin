@@ -57,12 +57,18 @@ final class InstallCommand extends ReleaseCommand
             $package = Package::extract($release, $workDirectory);
             Filesystem::remove($directory);
             Filesystem::move($package, $directory);
+            file_put_contents($directory . '/.env.local', sprintf("APP_SECRET=%s\n", bin2hex(random_bytes(16))));
         } finally {
             Filesystem::remove($workDirectory);
         }
 
         $io->success(sprintf('wallabag %s is installed in %s.', $release['version'], $directory));
-        $io->text('Next steps: configure your instance and create your user, see https://doc.wallabag.org/admin/installation/');
+        $io->text([
+            'Next steps:',
+            sprintf('1. Set your configuration (database, URL of your instance…) in %s/.env.local', $directory),
+            sprintf('2. Run "cd %s && php bin/console wallabag:install" to create the database and your user', $directory),
+            'See https://doc.wallabag.org/admin/installation/',
+        ]);
 
         return self::SUCCESS;
     }
