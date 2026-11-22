@@ -1,0 +1,6 @@
+{
+    "main": "bin/wallabin",
+    "output": "build/wallabin.phar",
+    "compression": "GZ",
+    "git-version": "package_version"
+}
