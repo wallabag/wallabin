@@ -4,15 +4,23 @@ wallabin installs and updates [wallabag](https://wallabag.org) from version 2.7.
 
 ⚠️ Work in progress: this first version is kept as simple as possible.
 
+## Download
+
+```bash
+curl -L -o wallabin.phar https://wallabag.org/wallabin
+```
+
+A new binary is published with each [wallabin release](https://github.com/wallabag/wallabin/releases).
+
 ## Usage
 
 ```bash
-php wallabin.phar install /var/www/wallabag
-php wallabin.phar check --dir=/var/www/wallabag
-php wallabin.phar update --dir=/var/www/wallabag
+php wallabin.phar install
+php wallabin.phar check --dir=wallabag
+php wallabin.phar update --dir=wallabag
 ```
 
-- `install` downloads the latest wallabag release, checks its SHA-256 checksum and extracts it in a new directory. Use `--release=2.7.1` to install another version.
+- `install` downloads the latest wallabag release, checks its SHA-256 checksum and extracts it in a new `wallabag` directory. Give another directory with `php wallabin.phar install /var/www/wallabag`, and another version with `--release=2.7.1`.
 - `check` tells you if a newer version is available, without changing anything. It also tells you if the update fixes security issues, changes the database, or needs a newer PHP version.
 - `update` does what `make update` did in wallabag 2.6, in one command: it downloads the new release, replaces the files, runs the database migrations and clears the cache. If something fails, the previous files are restored. **Back up your database first**: it is not restored.
 

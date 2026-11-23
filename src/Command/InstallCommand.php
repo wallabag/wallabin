@@ -17,7 +17,7 @@ final class InstallCommand extends ReleaseCommand
     protected function configure(): void
     {
         $this
-            ->addArgument('directory', InputArgument::REQUIRED, 'Directory to install wallabag in, it must be empty or not exist')
+            ->addArgument('directory', InputArgument::OPTIONAL, 'Directory to install wallabag in, it must be empty or not exist', 'wallabag')
             ->addOption('release', 'r', InputOption::VALUE_REQUIRED, 'Version to install, the latest one by default');
         $this->configureReleaseOptions();
     }

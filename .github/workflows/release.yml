@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  phar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: box
+          coverage: none
+
+      - run: composer install --no-interaction --no-progress --no-dev --optimize-autoloader
+
+      - run: box compile
+
+      - run: php build/wallabin.phar --version
+
+      - run: gh release upload "$TAG" build/wallabin.phar --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
