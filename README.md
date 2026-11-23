@@ -17,12 +17,24 @@ A new binary is published with each [wallabin release](https://github.com/wallab
 ```bash
 php wallabin.phar install
 php wallabin.phar check --dir=wallabag
-php wallabin.phar update --dir=wallabag
+sudo -u www-data php wallabin.phar update --dir=wallabag
 ```
 
 - `install` downloads the latest stable wallabag release, checks its SHA-256 checksum and extracts it in a new `wallabag` directory. Give another directory with `php wallabin.phar install /var/www/wallabag`, and another version with `--release=2.7.1`.
 - `check` tells you if a newer version is available, without changing anything. It also tells you if the update fixes security issues, changes the database, or needs a newer PHP version.
-- `update` does what `make update` did in wallabag 2.6, in one command: it downloads the new release, replaces the files, runs the database migrations and clears the cache. If something fails, the previous files are restored. **Back up your database first**: it is not restored.
+- `update` does what `make update` did in wallabag 2.6, in one command: it downloads the new release, replaces the files, runs the database migrations and clears the cache. If something fails, the previous files are restored.
+
+### Run wallabin as the owner of the files
+
+Run `update` as the user who owns the files of wallabag, usually the user of your web server (`www-data`, `nginx`, `apache`…). Otherwise the new files and the cache would belong to another user, and your web server could not write them anymore. wallabin refuses to update when you are not the owner of `var/`.
+
+Also check that `php` on the command line is the same version as the one of your web server: wallabin checks the PHP version it runs with.
+
+### Backups
+
+Before replacing the files, `update` keeps a backup in `var/wallabin/backup-<version>/`: the files of the previous version, and its database when you use SQLite. Only the last backup is kept. If the update fails, the files and the SQLite database are restored.
+
+wallabin can't back up MySQL, MariaDB or PostgreSQL databases. When an update changes the database, `update` asks you to confirm that you backed it up. Use `--yes` to skip this question, for example in a script.
 
 ### Test versions
 
@@ -36,12 +48,13 @@ Test versions are for fresh installs only: `check` and `update` only look for st
 
 ### Kept files
 
-`update` keeps these files: `.env.local`, `data/`, `var/`, `app/config/parameters.yml` and `web/assets/images/`. All other files are replaced by the ones of the new release.
+`update` keeps these files: `.env.local`, `.env.prod.local`, `.env.local.php`, `data/`, `var/` and `web/assets/images/`. All other files are replaced by the ones of the new release.
 
 | Option | |
 |---|---|
 | `--dir` | wallabag directory for `check` and `update`, the current directory by default |
 | `--pre` | install the latest test version (`install` only) |
+| `--yes` | don't ask to confirm that the database is backed up (`update` only) |
 | `--releases-url` | URL of the list of releases, `https://wallabag.org/releases.json` by default |
 
 `check` exits with `0` when wallabag is up to date, `2` when an update is available and `1` on error.
@@ -56,7 +69,7 @@ wallabag 2.6.x and older can't be updated with wallabin: follow the [upgrade doc
 
 ## Roadmap
 
-- back up the database before an update
+- back up MySQL, MariaDB and PostgreSQL databases before an update
 - `rollback`: go back to the previous version
 - `self-update`: update wallabin itself
 - signed packages

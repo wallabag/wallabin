@@ -16,7 +16,9 @@ final class UpdateCommand extends ReleaseCommand
 {
     protected function configure(): void
     {
-        $this->addOption('dir', 'd', InputOption::VALUE_REQUIRED, 'wallabag directory', '.');
+        $this
+            ->addOption('dir', 'd', InputOption::VALUE_REQUIRED, 'wallabag directory', '.')
+            ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Do not ask to confirm that the database is backed up');
         $this->configureReleaseOptions();
     }
 
@@ -26,7 +28,7 @@ final class UpdateCommand extends ReleaseCommand
         $installation = new Installation(rtrim($input->getOption('dir'), '/'));
         $current = $this->installedVersion($io, $installation);
 
-        if (null === $current) {
+        if (null === $current || !$this->runAsOwner($io, $installation)) {
             return self::FAILURE;
         }
 
@@ -40,9 +42,21 @@ final class UpdateCommand extends ReleaseCommand
             return self::SUCCESS;
         }
 
+        $database = $installation->sqliteDatabase();
+        $migrations = [] !== array_filter($newer, static fn (array $release): bool => $release['migrations']);
+
+        if (null === $database && $migrations && !$input->getOption('yes')
+            && !$io->confirm('This update changes the database and wallabin can only back up SQLite databases. Did you back up your database?', false)) {
+            $io->text('Back up your database, then run the update again with --yes.');
+
+            return self::FAILURE;
+        }
+
         $release = $newer[0];
-        $workDirectory = $installation->directory . '/var/wallabin';
+        $wallabinDirectory = $installation->directory . '/var/wallabin';
+        $workDirectory = $wallabinDirectory . '/work';
         $oldDirectory = $workDirectory . '/old';
+        $databaseCopy = $workDirectory . '/wallabag.sqlite';
 
         $io->text(sprintf('Downloading wallabag %s…', $release['version']));
         Filesystem::remove($workDirectory);
@@ -50,6 +64,10 @@ final class UpdateCommand extends ReleaseCommand
         try {
             $package = Package::extract($release, $workDirectory . '/new');
             mkdir($oldDirectory, 0777, true);
+
+            if (null !== $database && is_file($database) && !copy($database, $databaseCopy)) {
+                throw new \RuntimeException(sprintf('Cannot back up the database %s', $database));
+            }
 
             try {
                 $io->text('Replacing the files…');
@@ -62,16 +80,52 @@ final class UpdateCommand extends ReleaseCommand
                 $installation->console(['cache:clear']);
             } catch (\Throwable $e) {
                 $installation->restore($oldDirectory);
-                $io->error(sprintf("The update failed, the files of wallabag %s are restored. The database is not restored.\n%s", $current, $e->getMessage()));
+                $databaseRestored = is_file($databaseCopy) && copy($databaseCopy, $database);
+                $io->error(sprintf("The update failed, the files of wallabag %s are restored. %s\n%s", $current, $databaseRestored ? 'The database is restored.' : 'The database is not restored.', $e->getMessage()));
 
                 return self::FAILURE;
             }
+
+            $backup = $this->keepBackup($wallabinDirectory, $current, $oldDirectory, $databaseCopy);
         } finally {
             Filesystem::remove($workDirectory);
         }
 
-        $io->success(sprintf('wallabag is updated to %s.', $release['version']));
+        $io->success(sprintf('wallabag is updated to %s. The files of wallabag %s%s are kept in %s.', $release['version'], $current, null !== $database ? ' and its database' : '', $backup));
 
         return self::SUCCESS;
+    }
+
+    private function runAsOwner(SymfonyStyle $io, Installation $installation): bool
+    {
+        $owner = $installation->owner();
+
+        if (!\function_exists('posix_geteuid') || null === $owner || $owner === posix_geteuid()) {
+            return true;
+        }
+
+        $name = posix_getpwuid($owner)['name'] ?? (string) $owner;
+        $io->error([
+            sprintf('The files of wallabag belong to %s, but you run wallabin as %s: the updated files would not be writable by your web server.', $name, posix_getpwuid(posix_geteuid())['name'] ?? posix_geteuid()),
+            sprintf('Run wallabin as %s, for example: sudo -u %s php wallabin.phar update', $name, $name),
+        ]);
+
+        return false;
+    }
+
+    private function keepBackup(string $wallabinDirectory, string $version, string $oldDirectory, string $databaseCopy): string
+    {
+        foreach (glob($wallabinDirectory . '/backup-*') ?: [] as $previous) {
+            Filesystem::remove($previous);
+        }
+
+        $backup = $wallabinDirectory . '/backup-' . $version;
+        Filesystem::move($oldDirectory, $backup);
+
+        if (is_file($databaseCopy)) {
+            Filesystem::move($databaseCopy, $backup . '/wallabag.sqlite');
+        }
+
+        return $backup;
     }
 }

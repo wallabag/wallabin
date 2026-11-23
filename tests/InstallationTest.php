@@ -14,7 +14,7 @@ final class InstallationTest extends TestCase
     {
         $this->root = sys_get_temp_dir() . '/wallabin-test-' . bin2hex(random_bytes(4));
         $this->write('wallabag/app/config/wallabag.yml', "parameters:\n    wallabag.version: 2.7.0\n");
-        $this->write('wallabag/app/config/parameters.yml', 'mine');
+        $this->write('wallabag/.env.prod.local', 'mine');
         $this->write('wallabag/src/Obsolete.php', 'old');
         $this->write('wallabag/.env.local', 'mine');
         $this->write('wallabag/data/db/wallabag.sqlite', 'mine');
@@ -46,7 +46,7 @@ final class InstallationTest extends TestCase
         $this->assertFileExists($this->root . '/wallabag/src/Kernel.php');
         $this->assertFileDoesNotExist($this->root . '/wallabag/src/Obsolete.php');
 
-        foreach (['.env.local', 'data/db/wallabag.sqlite', 'app/config/parameters.yml', 'web/assets/images/picture.jpg'] as $file) {
+        foreach (['.env.local', 'data/db/wallabag.sqlite', '.env.prod.local', 'web/assets/images/picture.jpg'] as $file) {
             $this->assertStringEqualsFile($this->root . '/wallabag/' . $file, 'mine', $file);
         }
     }
@@ -61,9 +61,17 @@ final class InstallationTest extends TestCase
         $this->assertFileExists($this->root . '/wallabag/src/Obsolete.php');
         $this->assertFileDoesNotExist($this->root . '/wallabag/src/Kernel.php');
 
-        foreach (['.env.local', 'data/db/wallabag.sqlite', 'app/config/parameters.yml', 'web/assets/images/picture.jpg'] as $file) {
+        foreach (['.env.local', 'data/db/wallabag.sqlite', '.env.prod.local', 'web/assets/images/picture.jpg'] as $file) {
             $this->assertStringEqualsFile($this->root . '/wallabag/' . $file, 'mine', $file);
         }
+    }
+
+    public function testSqlitePath(): void
+    {
+        $this->assertSame('/srv/wallabag/data/db/wallabag.sqlite', Installation::sqlitePath('sqlite:///%kernel.project_dir%/data/db/wallabag.sqlite', '/srv/wallabag'));
+        $this->assertSame('/var/lib/wallabag.sqlite', Installation::sqlitePath('sqlite:////var/lib/wallabag.sqlite?charset=utf8', '/srv/wallabag'));
+        $this->assertNull(Installation::sqlitePath('mysql://wallabag:secret@127.0.0.1:3306/wallabag', '/srv/wallabag'));
+        $this->assertNull(Installation::sqlitePath('', '/srv/wallabag'));
     }
 
     private function write(string $path, string $content): void

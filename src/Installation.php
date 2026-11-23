@@ -6,7 +6,7 @@ use Symfony\Component\Process\Process;
 
 final class Installation
 {
-    public const KEPT = ['.env.local', 'data', 'var', 'app/config/parameters.yml', 'web/assets/images'];
+    public const KEPT = ['.env.local', '.env.local.php', '.env.prod.local', 'data', 'var', 'web/assets/images'];
 
     public function __construct(public readonly string $directory)
     {
@@ -21,6 +21,37 @@ final class Installation
         }
 
         return $matches[1];
+    }
+
+    public function owner(): ?int
+    {
+        $path = is_dir($this->directory . '/var') ? $this->directory . '/var' : $this->directory;
+        $owner = @fileowner($path);
+
+        return false === $owner ? null : $owner;
+    }
+
+    public function sqliteDatabase(): ?string
+    {
+        $process = new Process([\PHP_BINARY, '-d', 'display_errors=0', '-r', 'require "vendor/autoload.php"; (new Symfony\Component\Dotenv\Dotenv())->bootEnv(".env", "prod"); echo $_SERVER["DATABASE_URL"] ?? "";'], $this->directory, ['APP_ENV' => 'prod']);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            return null;
+        }
+
+        return self::sqlitePath(trim($process->getOutput()), realpath($this->directory));
+    }
+
+    public static function sqlitePath(string $databaseUrl, string $directory): ?string
+    {
+        if (!str_starts_with($databaseUrl, 'sqlite:///')) {
+            return null;
+        }
+
+        $path = str_replace('%kernel.project_dir%', $directory, explode('?', substr($databaseUrl, 10))[0]);
+
+        return str_starts_with($path, '/') ? $path : $directory . '/' . $path;
     }
 
     public function replaceWith(string $newDirectory, string $oldDirectory): void
