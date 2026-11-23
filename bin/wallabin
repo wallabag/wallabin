@@ -7,11 +7,13 @@ use Symfony\Component\Console\Application;
 use Wallabag\Wallabin\Command\CheckCommand;
 use Wallabag\Wallabin\Command\InstallCommand;
 use Wallabag\Wallabin\Command\RequirementsCommand;
+use Wallabag\Wallabin\Command\RollbackCommand;
 use Wallabag\Wallabin\Command\UpdateCommand;
 
 $application = new Application('wallabin', '@package_version@');
 $application->add(new InstallCommand());
 $application->add(new CheckCommand());
 $application->add(new UpdateCommand());
+$application->add(new RollbackCommand());
 $application->add(new RequirementsCommand());
 $application->run();

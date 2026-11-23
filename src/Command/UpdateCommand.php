@@ -102,23 +102,6 @@ final class UpdateCommand extends ReleaseCommand
         return self::SUCCESS;
     }
 
-    private function runAsOwner(SymfonyStyle $io, Installation $installation): bool
-    {
-        $owner = $installation->owner();
-
-        if (!\function_exists('posix_geteuid') || null === $owner || $owner === posix_geteuid()) {
-            return true;
-        }
-
-        $name = posix_getpwuid($owner)['name'] ?? (string) $owner;
-        $io->error([
-            sprintf('The files of wallabag belong to %s, but you run wallabin as %s: the updated files would not be writable by your web server.', $name, posix_getpwuid(posix_geteuid())['name'] ?? posix_geteuid()),
-            sprintf('Run wallabin as %s, for example: sudo -u %s php wallabin.phar update', $name, $name),
-        ]);
-
-        return false;
-    }
-
     private function keepBackup(string $wallabinDirectory, string $version, string $oldDirectory, string $databaseCopy): string
     {
         foreach (glob($wallabinDirectory . '/backup-*') ?: [] as $previous) {

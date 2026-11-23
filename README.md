@@ -19,6 +19,7 @@ php wallabin.phar requirements
 php wallabin.phar install
 php wallabin.phar check --dir=wallabag
 sudo -u www-data php wallabin.phar update --dir=wallabag
+sudo -u www-data php wallabin.phar rollback --dir=wallabag
 ```
 
 - `requirements` checks that your server can run wallabag: PHP version, PHP extensions (with the driver of your database when wallabag is installed), the `tar` command and a writable directory. `install` and `update` run these checks first and stop if something is missing.
@@ -35,6 +36,8 @@ Also check that `php` on the command line is the same version as the one of your
 ### Backups
 
 Before replacing the files, `update` keeps a backup in `var/wallabin/backup-<version>/`: the files of the previous version, and its database when you use SQLite. Only the last backup is kept. If the update fails, the files and the SQLite database are restored.
+
+`rollback` goes back to the version kept in this backup, and removes the backup. When the last update changed the database, a SQLite database goes back to its state before the update: everything saved since then is lost. MySQL, MariaDB and PostgreSQL databases are not restored: restore your own backup. `rollback` asks for a confirmation first, use `--yes` to skip it.
 
 wallabin can't back up MySQL, MariaDB or PostgreSQL databases. When an update changes the database, `update` asks you to confirm that you backed it up. Use `--yes` to skip this question, for example in a script.
 
@@ -54,9 +57,9 @@ Test versions are for fresh installs only: `check` and `update` only look for st
 
 | Option | |
 |---|---|
-| `--dir` | wallabag directory for `requirements`, `check` and `update`, the current directory by default |
+| `--dir` | wallabag directory for `requirements`, `check`, `update` and `rollback`, the current directory by default |
 | `--pre` | install the latest test version (`install` only) |
-| `--yes` | don't ask to confirm that the database is backed up (`update` only) |
+| `--yes` | don't ask for a confirmation (`update` and `rollback`) |
 | `--releases-url` | URL of the list of releases, `https://wallabag.org/releases.json` by default |
 
 `check` exits with `0` when wallabag is up to date, `2` when an update is available and `1` on error.
@@ -72,7 +75,6 @@ wallabag 2.6.x and older can't be updated with wallabin: follow the [upgrade doc
 ## Roadmap
 
 - back up MySQL, MariaDB and PostgreSQL databases before an update
-- `rollback`: go back to the previous version
 - `self-update`: update wallabin itself
 - signed packages
 

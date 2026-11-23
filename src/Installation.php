@@ -59,6 +59,21 @@ final class Installation
         return str_starts_with($path, '/') ? $path : $directory . '/' . $path;
     }
 
+    public function backup(): ?string
+    {
+        return glob($this->directory . '/var/wallabin/backup-*', \GLOB_ONLYDIR)[0] ?? null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function migrationsSince(string $previousDirectory): array
+    {
+        $files = static fn (string $directory): array => is_dir($directory . '/migrations') ? Filesystem::entries($directory . '/migrations') : [];
+
+        return array_values(array_diff($files($this->directory), $files($previousDirectory)));
+    }
+
     public function replaceWith(string $newDirectory, string $oldDirectory): void
     {
         $topLevelKept = array_filter(self::KEPT, static fn (string $path): bool => !str_contains($path, '/'));

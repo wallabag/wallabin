@@ -66,6 +66,20 @@ final class InstallationTest extends TestCase
         }
     }
 
+    public function testBackupAndMigrationsSinceIt(): void
+    {
+        $installation = new Installation($this->root . '/wallabag');
+        $this->assertNull($installation->backup());
+
+        $this->write('wallabag/var/wallabin/backup-2.7.0/migrations/Version1.php', '');
+        $this->write('wallabag/migrations/Version1.php', '');
+        $this->assertSame($this->root . '/wallabag/var/wallabin/backup-2.7.0', $installation->backup());
+        $this->assertSame([], $installation->migrationsSince($installation->backup()));
+
+        $this->write('wallabag/migrations/Version2.php', '');
+        $this->assertSame(['Version2.php'], $installation->migrationsSince($installation->backup()));
+    }
+
     public function testSqlitePath(): void
     {
         $this->assertSame('/srv/wallabag/data/db/wallabag.sqlite', Installation::sqlitePath('sqlite:///%kernel.project_dir%/data/db/wallabag.sqlite', '/srv/wallabag'));
