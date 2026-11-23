@@ -58,14 +58,17 @@ jobs:
 
       - run: sudo apt-get update -q && sudo apt-get install -yq minisign
 
-      - name: Choose the binary to sign
+      - name: Check a binary already published by a previous attempt
         run: |
+          mv built/wallabin.phar .
           if gh release view "$TAG" --json assets -q '.assets[].name' | grep -qx wallabin.phar; then
             gh release download "$TAG" -p wallabin.phar -D published
-            mv published/wallabin.phar .
+            if [ "$(sha256sum < published/wallabin.phar)" != "$(sha256sum < wallabin.phar)" ]; then
+              echo "::error::The published wallabin.phar is not the binary built by this run: delete it from the release, then rerun all jobs."
+              exit 1
+            fi
             echo "UPLOAD_PHAR=0" >> "$GITHUB_ENV"
           else
-            mv built/wallabin.phar .
             echo "UPLOAD_PHAR=1" >> "$GITHUB_ENV"
           fi
 
