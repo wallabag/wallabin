@@ -103,6 +103,14 @@ composer install
 vendor/bin/phpunit
 ```
 
+The end-to-end test installs wallabag 2.6, migrates it to 2.7, updates it and rolls it back, with SQLite, MySQL or PostgreSQL. It needs a wallabag 2.6 package and a 2.7 package:
+
+```bash
+DATABASE=mysql DB_PASSWORD=root tests/e2e/run.sh wallabag-2.6.18.tar.gz wallabag-2.7.0.tar.gz
+```
+
+The CI runs it on the three databases, with a 2.7 package built from wallabag.
+
 To build the PHAR, download [Box](https://github.com/box-project/box) first:
 
 ```bash
