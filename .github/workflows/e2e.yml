@@ -15,7 +15,7 @@ on:
 
 env:
   WALLABAG_26: '2.6.18'
-  WALLABAG_REF: ${{ inputs.wallabag-ref || 'release-package-for-wallabin' }}
+  WALLABAG_REF: ${{ inputs.wallabag-ref || 'master' }}
 
 permissions:
   contents: read
