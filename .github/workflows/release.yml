@@ -6,18 +6,19 @@ on:
       - published
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  phar:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.2'
           tools: box
@@ -29,16 +30,59 @@ jobs:
 
       - run: php build/wallabin.phar --version
 
-      - run: |
-          sudo apt-get update -q && sudo apt-get install -yq minisign
-          printf '%s\n' "$MINISIGN_SECRET_KEY" > "$RUNNER_TEMP/minisign.key"
-          minisign -S -s "$RUNNER_TEMP/minisign.key" -m build/wallabin.phar -t "wallabin $TAG"
-          rm "$RUNNER_TEMP/minisign.key"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: phar
+          path: build/wallabin.phar
+          if-no-files-found: error
+          retention-days: 7
+
+  sign:
+    runs-on: ubuntu-latest
+    needs: build
+
+    permissions:
+      contents: write
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name }}
+      MINISIGN_PUBLIC_KEY: RWQT4s5qtqdNSaZOi9peL3i+pP/KMMzpk/c9XJd84ZIpxFWaGqYOlwy+
+
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: phar
+          path: built
+
+      - run: sudo apt-get update -q && sudo apt-get install -yq minisign
+
+      - name: Choose the binary to sign
+        run: |
+          if gh release view "$TAG" --json assets -q '.assets[].name' | grep -qx wallabin.phar; then
+            gh release download "$TAG" -p wallabin.phar -D published
+            mv published/wallabin.phar .
+            echo "UPLOAD_PHAR=0" >> "$GITHUB_ENV"
+          else
+            mv built/wallabin.phar .
+            echo "UPLOAD_PHAR=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Sign the binary
         env:
           MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
-          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          printf '%s\n' "$MINISIGN_SECRET_KEY" > "$RUNNER_TEMP/minisign.key"
+          minisign -S -s "$RUNNER_TEMP/minisign.key" -m wallabin.phar -t "wallabin $TAG"
+          rm "$RUNNER_TEMP/minisign.key"
 
-      - run: gh release upload "$TAG" build/wallabin.phar build/wallabin.phar.minisig --clobber
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
+      - name: Check the signature
+        run: minisign -V -P "$MINISIGN_PUBLIC_KEY" -m wallabin.phar
+
+      - name: Upload the binary and its signature to the release
+        run: |
+          if [ 1 = "$UPLOAD_PHAR" ]; then
+            gh release upload "$TAG" wallabin.phar
+          fi
+          gh release upload "$TAG" wallabin.phar.minisig --clobber
