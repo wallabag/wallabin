@@ -59,7 +59,7 @@ Test versions are for fresh installs only: `check` and `update` only look for st
 
 `check` exits with `0` when wallabag is up to date, `2` when an update is available and `1` on error.
 
-wallabin needs PHP 8.1 or later with the `curl` extension, and the `tar` command.
+wallabin needs the same PHP version as wallabag 2.7: PHP 8.2 or later (tested with 8.2, 8.3 and 8.4), with the `curl` extension, and the `tar` command.
 
 ## How it works
 
