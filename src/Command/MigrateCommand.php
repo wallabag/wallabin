@@ -62,7 +62,7 @@ final class MigrateCommand extends ReleaseCommand
         }
 
         try {
-            $env = LegacyParameters::toEnv(LegacyParameters::read($parametersFile));
+            $env = ['APP_ENV' => 'prod'] + LegacyParameters::toEnv(LegacyParameters::read($parametersFile));
         } catch (\Throwable $e) {
             $io->error(sprintf("Cannot read the configuration of wallabag from %s.\n%s", $parametersFile, $e->getMessage()));
 

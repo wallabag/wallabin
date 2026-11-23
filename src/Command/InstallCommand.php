@@ -52,7 +52,7 @@ final class InstallCommand extends ReleaseCommand
             return self::FAILURE;
         }
 
-        $env = ['APP_SECRET' => bin2hex(random_bytes(16))] + $this->askConfiguration($io, $input);
+        $env = ['APP_ENV' => 'prod', 'APP_SECRET' => bin2hex(random_bytes(16))] + $this->askConfiguration($io, $input);
         $adminPassword = $input->getOption('admin-password') ?? $this->askAdminPassword($io);
 
         if (!$this->meetsRequirements($io, $directory, $env['DATABASE_URL'])) {
