@@ -8,6 +8,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Wallabag\Wallabin\Installation;
 use Wallabag\Wallabin\Releases;
+use Wallabag\Wallabin\Requirements;
 
 abstract class ReleaseCommand extends Command
 {
@@ -39,6 +40,19 @@ abstract class ReleaseCommand extends Command
         }
 
         return $version;
+    }
+
+    protected function meetsRequirements(SymfonyStyle $io, string $directory, ?string $databaseUrl = null): bool
+    {
+        $failures = (new Requirements())->failures($directory, $databaseUrl);
+
+        if ([] === $failures) {
+            return true;
+        }
+
+        $io->error(array_merge(['wallabag can\'t run on this server, these requirements are missing:'], array_map(static fn (string $failure): string => '- ' . $failure, $failures)));
+
+        return false;
     }
 
     /**

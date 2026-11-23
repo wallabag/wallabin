@@ -31,7 +31,7 @@ final class Installation
         return false === $owner ? null : $owner;
     }
 
-    public function sqliteDatabase(): ?string
+    public function databaseUrl(): ?string
     {
         $process = new Process([\PHP_BINARY, '-d', 'display_errors=0', '-r', 'require "vendor/autoload.php"; (new Symfony\Component\Dotenv\Dotenv())->bootEnv(".env", "prod"); echo $_SERVER["DATABASE_URL"] ?? "";'], $this->directory, ['APP_ENV' => 'prod']);
         $process->run();
@@ -40,7 +40,12 @@ final class Installation
             return null;
         }
 
-        return self::sqlitePath(trim($process->getOutput()), realpath($this->directory));
+        return trim($process->getOutput()) ?: null;
+    }
+
+    public function sqliteDatabase(?string $databaseUrl): ?string
+    {
+        return null === $databaseUrl ? null : self::sqlitePath($databaseUrl, realpath($this->directory));
     }
 
     public static function sqlitePath(string $databaseUrl, string $directory): ?string

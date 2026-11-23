@@ -34,6 +34,10 @@ final class InstallCommand extends ReleaseCommand
             return self::FAILURE;
         }
 
+        if (!$this->meetsRequirements($io, $directory)) {
+            return self::FAILURE;
+        }
+
         $releases = $this->fetchReleases($input);
         $release = $input->getOption('release')
             ? $releases->find($input->getOption('release'))

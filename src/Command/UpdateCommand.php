@@ -32,6 +32,12 @@ final class UpdateCommand extends ReleaseCommand
             return self::FAILURE;
         }
 
+        $databaseUrl = $installation->databaseUrl();
+
+        if (!$this->meetsRequirements($io, $installation->directory, $databaseUrl)) {
+            return self::FAILURE;
+        }
+
         $releases = $this->fetchReleases($input);
         $newer = $releases->newerThan($current, false);
         $this->showUpdate($io, $releases, $current, $newer);
@@ -42,7 +48,7 @@ final class UpdateCommand extends ReleaseCommand
             return self::SUCCESS;
         }
 
-        $database = $installation->sqliteDatabase();
+        $database = $installation->sqliteDatabase($databaseUrl);
         $migrations = [] !== array_filter($newer, static fn (array $release): bool => $release['migrations']);
 
         if (null === $database && $migrations && !$input->getOption('yes')

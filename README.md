@@ -15,11 +15,13 @@ A new binary is published with each [wallabin release](https://github.com/wallab
 ## Usage
 
 ```bash
+php wallabin.phar requirements
 php wallabin.phar install
 php wallabin.phar check --dir=wallabag
 sudo -u www-data php wallabin.phar update --dir=wallabag
 ```
 
+- `requirements` checks that your server can run wallabag: PHP version, PHP extensions (with the driver of your database when wallabag is installed), the `tar` command and a writable directory. `install` and `update` run these checks first and stop if something is missing.
 - `install` downloads the latest stable wallabag release, checks its SHA-256 checksum and extracts it in a new `wallabag` directory. Give another directory with `php wallabin.phar install /var/www/wallabag`, and another version with `--release=2.7.1`.
 - `check` tells you if a newer version is available, without changing anything. It also tells you if the update fixes security issues, changes the database, or needs a newer PHP version.
 - `update` does what `make update` did in wallabag 2.6, in one command: it downloads the new release, replaces the files, runs the database migrations and clears the cache. If something fails, the previous files are restored.
@@ -52,7 +54,7 @@ Test versions are for fresh installs only: `check` and `update` only look for st
 
 | Option | |
 |---|---|
-| `--dir` | wallabag directory for `check` and `update`, the current directory by default |
+| `--dir` | wallabag directory for `requirements`, `check` and `update`, the current directory by default |
 | `--pre` | install the latest test version (`install` only) |
 | `--yes` | don't ask to confirm that the database is backed up (`update` only) |
 | `--releases-url` | URL of the list of releases, `https://wallabag.org/releases.json` by default |

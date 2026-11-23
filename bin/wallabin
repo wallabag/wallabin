@@ -6,10 +6,12 @@ require __DIR__ . '/../vendor/autoload.php';
 use Symfony\Component\Console\Application;
 use Wallabag\Wallabin\Command\CheckCommand;
 use Wallabag\Wallabin\Command\InstallCommand;
+use Wallabag\Wallabin\Command\RequirementsCommand;
 use Wallabag\Wallabin\Command\UpdateCommand;
 
 $application = new Application('wallabin', '@package_version@');
 $application->add(new InstallCommand());
 $application->add(new CheckCommand());
 $application->add(new UpdateCommand());
+$application->add(new RequirementsCommand());
 $application->run();
