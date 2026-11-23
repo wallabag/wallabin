@@ -43,7 +43,7 @@ final class MigrateCommand extends ReleaseCommand
         }
 
         if (version_compare($current, '2.6.0', '<')) {
-            $io->error(sprintf('wallabin migrates wallabag 2.6 only: update wallabag %s to the latest 2.6 version first, with "make update".', $current));
+            $io->error(sprintf('wallabin migrates wallabag 2.6 only: update wallabag %s to the latest 2.6 patch version first, with "make update".', $current));
 
             return self::FAILURE;
         }

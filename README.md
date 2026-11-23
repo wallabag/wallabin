@@ -84,7 +84,7 @@ sudo -u www-data php wallabin.phar migrate --dir=/var/www/wallabag
 
 The files of wallabag 2.6, with your `parameters.yml` file and its `.git` folder if any, are kept in `var/wallabin/backup-2.6.x/`, so that `rollback` can go back to 2.6. Like `update`, it backs up a SQLite database, and asks you to confirm that you backed up a MySQL, MariaDB or PostgreSQL database.
 
-Update to the latest 2.6 version first. After the migration, check your web server configuration: the built assets moved from `web/wallassets/` to `web/build/`, and `web/index.php` is the new front controller (`web/app.php` still works). See the [upgrade documentation](https://doc.wallabag.org/admin/upgrade/).
+Before the migration, update wallabag to the latest 2.6 patch version (2.6.18 or later) with `make update`. After the migration, check your web server configuration: the built assets moved from `web/wallassets/` to `web/build/`, and `web/index.php` is the new front controller (`web/app.php` still works). See the [upgrade documentation](https://doc.wallabag.org/admin/upgrade/).
 
 ### Kept files
 
@@ -112,7 +112,7 @@ The wallabag packages and the wallabin binaries are signed with [minisign](https
 minisign -V -P RWQT4s5qtqdNSaZOi9peL3i+pP/KMMzpk/c9XJd84ZIpxFWaGqYOlwy+ -m wallabag-2.7.0.tar.gz
 ```
 
-wallabag 2.6 is migrated to 2.7 with `migrate`. Older versions must be updated to 2.6 first.
+wallabag 2.6 is migrated to 2.7 with `migrate`. Update it to the latest 2.6 patch version first, and older versions to 2.6 before that.
 
 ## Roadmap
 
