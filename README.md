@@ -51,15 +51,31 @@ php wallabin.phar install --pre wallabag-test
 
 Test versions are for fresh installs only: `check` and `update` only look for stable versions, so that an instance is never broken by a test version. An instance running a test version is updated with the next stable release.
 
+### Migrate from wallabag 2.6
+
+```bash
+sudo -u www-data php wallabin.phar migrate --dir=/var/www/wallabag
+```
+
+`migrate` moves a wallabag 2.6 installation to the latest stable 2.7 release, in place, whether it was installed with git or with a package:
+
+1. it converts your `app/config/parameters.yml` file into a `.env.local` file, as wallabag 2.7 is configured with environment variables,
+2. it replaces the files of wallabag 2.6 by the ones of 2.7, and keeps your `data/` folder, your downloaded images and your `var/` folder,
+3. it runs the database migrations and clears the cache.
+
+The files of wallabag 2.6, with your `parameters.yml` file and its `.git` folder if any, are kept in `var/wallabin/backup-2.6.x/`, so that `rollback` can go back to 2.6. Like `update`, it backs up a SQLite database, and asks you to confirm that you backed up a MySQL, MariaDB or PostgreSQL database.
+
+Update to the latest 2.6 version first. After the migration, check your web server configuration: the built assets moved from `web/wallassets/` to `web/build/`, and `web/index.php` is the new front controller (`web/app.php` still works). See the [upgrade documentation](https://doc.wallabag.org/admin/upgrade/).
+
 ### Kept files
 
-`update` keeps these files: `.env.local`, `.env.prod.local`, `.env.local.php`, `data/`, `var/` and `web/assets/images/`. All other files are replaced by the ones of the new release.
+`update` keeps these files: `.env.local`, `.env.prod.local`, `.env.local.php`, `data/`, `var/`, `app/config/parameters.yml` and `web/assets/images/`. All other files are replaced by the ones of the new release.
 
 | Option | |
 |---|---|
-| `--dir` | wallabag directory for `requirements`, `check`, `update` and `rollback`, the current directory by default |
+| `--dir` | wallabag directory for `requirements`, `check`, `update`, `rollback` and `migrate`, the current directory by default |
 | `--pre` | install the latest test version (`install` only) |
-| `--yes` | don't ask for a confirmation (`update` and `rollback`) |
+| `--yes` | don't ask for a confirmation (`update`, `rollback` and `migrate`) |
 | `--releases-url` | URL of the list of releases, `https://wallabag.org/releases.json` by default |
 
 `check` exits with `0` when wallabag is up to date, `2` when an update is available and `1` on error.
@@ -70,7 +86,7 @@ wallabin needs the same PHP version as wallabag 2.7: PHP 8.2 or later (tested wi
 
 wallabin reads [releases.json](https://wallabag.org/releases.json) on wallabag.org. This file lists the releases from 2.7.0, with their package and its SHA-256 checksum. Your instance sends no information: wallabin downloads the whole file and compares it with the installed version.
 
-wallabag 2.6.x and older can't be updated with wallabin: follow the [upgrade documentation](https://doc.wallabag.org/admin/upgrade/) to move to 2.7.
+wallabag 2.6 is migrated to 2.7 with `migrate`. Older versions must be updated to 2.6 first.
 
 ## Roadmap
 

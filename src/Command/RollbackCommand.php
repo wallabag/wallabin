@@ -74,6 +74,7 @@ final class RollbackCommand extends ReleaseCommand
             }
 
             $installation->replaceWith($backup, $oldDirectory);
+            $installation->clearCache();
 
             try {
                 if ($restoreDatabase && !copy($workDirectory . '/backup.sqlite', $database)) {
@@ -99,6 +100,10 @@ final class RollbackCommand extends ReleaseCommand
             }
 
             Filesystem::remove($backup);
+
+            if (version_compare($previous, '2.7.0-alpha.1', '<')) {
+                Filesystem::remove($installation->directory . '/.env.local');
+            }
         } finally {
             Filesystem::remove($workDirectory);
         }

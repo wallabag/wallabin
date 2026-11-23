@@ -6,7 +6,7 @@ use Symfony\Component\Process\Process;
 
 final class Installation
 {
-    public const KEPT = ['.env.local', '.env.local.php', '.env.prod.local', 'data', 'var', 'web/assets/images'];
+    public const KEPT = ['.env.local', '.env.local.php', '.env.prod.local', 'data', 'var', 'app/config/parameters.yml', 'web/assets/images'];
 
     public function __construct(public readonly string $directory)
     {
@@ -16,7 +16,7 @@ final class Installation
     {
         $file = $this->directory . '/app/config/wallabag.yml';
 
-        if (!is_file($file) || !preg_match('/^\s*wallabag\.version:\s*[\'"]?([^\s\'"]+)/m', (string) file_get_contents($file), $matches)) {
+        if (!is_file($file) || !preg_match('/^\s*(?:wallabag\.)?version:\s*[\'"]?([^\s\'"]+)/m', (string) file_get_contents($file), $matches)) {
             return null;
         }
 
@@ -57,6 +57,15 @@ final class Installation
         $path = str_replace('%kernel.project_dir%', $directory, explode('?', substr($databaseUrl, 10))[0]);
 
         return str_starts_with($path, '/') ? $path : $directory . '/' . $path;
+    }
+
+    public function clearCache(): void
+    {
+        if (is_dir($this->directory . '/var/cache')) {
+            foreach (Filesystem::entries($this->directory . '/var/cache') as $entry) {
+                Filesystem::remove($this->directory . '/var/cache/' . $entry);
+            }
+        }
     }
 
     public function backup(): ?string

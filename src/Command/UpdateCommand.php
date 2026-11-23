@@ -7,9 +7,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Wallabag\Wallabin\Filesystem;
 use Wallabag\Wallabin\Installation;
-use Wallabag\Wallabin\Package;
 
 #[AsCommand(name: 'update', description: 'Update wallabag to the latest version: files, database migrations and cache')]
 final class UpdateCommand extends ReleaseCommand
@@ -58,63 +56,6 @@ final class UpdateCommand extends ReleaseCommand
             return self::FAILURE;
         }
 
-        $release = $newer[0];
-        $wallabinDirectory = $installation->directory . '/var/wallabin';
-        $workDirectory = $wallabinDirectory . '/work';
-        $oldDirectory = $workDirectory . '/old';
-        $databaseCopy = $workDirectory . '/wallabag.sqlite';
-
-        $io->text(sprintf('Downloading wallabag %s…', $release['version']));
-        Filesystem::remove($workDirectory);
-
-        try {
-            $package = Package::extract($release, $workDirectory . '/new');
-            mkdir($oldDirectory, 0777, true);
-
-            if (null !== $database && is_file($database) && !copy($database, $databaseCopy)) {
-                throw new \RuntimeException(sprintf('Cannot back up the database %s', $database));
-            }
-
-            try {
-                $io->text('Replacing the files…');
-                $installation->replaceWith($package, $oldDirectory);
-
-                $io->text('Running the database migrations…');
-                $installation->console(['doctrine:migrations:migrate']);
-
-                $io->text('Clearing the cache…');
-                $installation->console(['cache:clear']);
-            } catch (\Throwable $e) {
-                $installation->restore($oldDirectory);
-                $databaseRestored = is_file($databaseCopy) && copy($databaseCopy, $database);
-                $io->error(sprintf("The update failed, the files of wallabag %s are restored. %s\n%s", $current, $databaseRestored ? 'The database is restored.' : 'The database is not restored.', $e->getMessage()));
-
-                return self::FAILURE;
-            }
-
-            $backup = $this->keepBackup($wallabinDirectory, $current, $oldDirectory, $databaseCopy);
-        } finally {
-            Filesystem::remove($workDirectory);
-        }
-
-        $io->success(sprintf('wallabag is updated to %s. The files of wallabag %s%s are kept in %s.', $release['version'], $current, null !== $database ? ' and its database' : '', $backup));
-
-        return self::SUCCESS;
-    }
-
-    private function keepBackup(string $wallabinDirectory, string $version, string $oldDirectory, string $databaseCopy): string
-    {
-        foreach (glob($wallabinDirectory . '/backup-*') ?: [] as $previous) {
-            Filesystem::remove($previous);
-        }
-
-        $backup = $wallabinDirectory . '/backup-' . $version;
-        Filesystem::move($oldDirectory, $backup);
-
-        if (is_file($databaseCopy)) {
-            Filesystem::move($databaseCopy, $backup . '/wallabag.sqlite');
-        }
-
-        return $backup;
+        return $this->upgrade($io, $installation, $current, $newer[0], $database);
     }
 }

@@ -35,6 +35,9 @@ final class InstallationTest extends TestCase
     {
         $this->assertSame('2.7.0', (new Installation($this->root . '/wallabag'))->version());
         $this->assertNull((new Installation($this->root))->version());
+
+        $this->write('legacy/app/config/wallabag.yml', "wallabag_core:\n    version: 2.6.18\n");
+        $this->assertSame('2.6.18', (new Installation($this->root . '/legacy'))->version());
     }
 
     public function testReplaceKeepsTheUserFiles(): void
