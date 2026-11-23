@@ -84,6 +84,14 @@ sudo -u www-data php wallabin.phar migrate --dir=/var/www/wallabag
 
 The files of wallabag 2.6, with your `parameters.yml` file and its `.git` folder if any, are kept in `var/wallabin/backup-2.6.x/`, so that `rollback` can go back to 2.6. Like `update`, it backs up a SQLite database, and asks you to confirm that you backed up a MySQL, MariaDB or PostgreSQL database.
 
+To try a test version of 2.7 (alpha, beta or release candidate), migrate **a copy** of your instance, with a copy of its database, never the instance you use every day:
+
+```bash
+sudo -u www-data php wallabin.phar migrate --pre --dir=/var/www/wallabag-copy
+```
+
+wallabin asks you to confirm that you migrate a copy. `rollback` goes back to 2.6, but only a SQLite database is restored as it was before the migration. The migrated instance stays on this test version: `update` only installs stable versions, so it moves to the stable 2.7.0 release when it's out.
+
 Before the migration, update wallabag to the latest 2.6 patch version (2.6.18 or later) with `make update`. After the migration, check your web server configuration: the built assets moved from `web/wallassets/` to `web/build/`, and `web/index.php` is the new front controller (`web/app.php` still works). See the [upgrade documentation](https://doc.wallabag.org/admin/upgrade/).
 
 ### Kept files
@@ -93,7 +101,7 @@ Before the migration, update wallabag to the latest 2.6 patch version (2.6.18 or
 | Option | |
 |---|---|
 | `--dir` | wallabag directory for `requirements`, `check`, `update`, `rollback` and `migrate`, the current directory by default |
-| `--pre` | install the latest test version (`install` only) |
+| `--pre` | install or migrate to the latest test version (`install` and `migrate` only) |
 | `--url`, `--database-url`, `--admin-password` | configuration of a new instance (`install` only) |
 | `--yes` | don't ask for a confirmation (`update`, `rollback` and `migrate`) |
 | `--releases-url` | URL of the list of releases, `https://wallabag.org/releases.json` by default |

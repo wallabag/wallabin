@@ -87,7 +87,7 @@ releases() {
         $releases = [];
         foreach (array_slice($argv, 2) as $version) {
             $file = $argv[1] . "/wallabag-" . $version . ".tar.gz";
-            $releases[] = ["version" => $version, "date" => "2027-01-01", "prerelease" => false, "security" => false, "php_min" => "8.2", "migrations" => "2.7.0" === $version, "release_url" => "https://github.com/wallabag/wallabag/releases/tag/" . $version, "tarball_url" => "file://" . $file, "sha256" => hash_file("sha256", $file), "notes_url" => null];
+            $releases[] = ["version" => $version, "date" => "2027-01-01", "prerelease" => str_contains($version, "-"), "security" => false, "php_min" => "8.2", "migrations" => str_starts_with($version, "2.7.0"), "release_url" => "https://github.com/wallabag/wallabag/releases/tag/" . $version, "tarball_url" => "file://" . $file, "sha256" => hash_file("sha256", $file), "notes_url" => null];
         }
         file_put_contents($argv[1] . "/releases.json", json_encode(["releases" => $releases]));
     ' "$WORK" "$@"
@@ -95,7 +95,8 @@ releases() {
 
 trap 'rm -rf "$WORK"' EXIT
 
-step "Prepare the 2.7.0 and 2.7.1 packages"
+step "Prepare the 2.7.0-beta.1, 2.7.0 and 2.7.1 packages"
+package 2.7.0-beta.1
 package 2.7.0
 package 2.7.1
 releases 2.7.0
@@ -145,7 +146,31 @@ fi
 assert_version '2\.6\.[0-9]+'
 assert_data
 
+step "Migrate without --pre: no stable 2.7 release"
+releases 2.7.0-beta.1
+if wallabin migrate --releases-url="file://$RELEASES" --yes; then
+    fail 'migrate should not install a test version without --pre'
+fi
+assert_version '2\.6\.[0-9]+'
+
+step "Migrate to 2.7.0-beta.1 with --pre"
+wallabin migrate --pre --releases-url="file://$RELEASES" --yes
+assert_version 2.7.0-beta.1
+assert_data
+assert_login "$WALLABAG" wallabag
+
+step "Roll back to 2.6"
+wallabin rollback --yes
+assert_version '2\.6\.[0-9]+'
+[ -e "$WALLABAG/app/config/parameters.yml" ] || fail 'parameters.yml is not restored'
+[ ! -e "$WALLABAG/.env.local" ] || fail '.env.local is still there'
+
+if [ sqlite = "$DATABASE" ]; then
+    assert_data
+fi
+
 step "Migrate to 2.7.0"
+releases 2.7.0
 wallabin migrate --releases-url="file://$RELEASES" --yes
 assert_version 2.7.0
 assert_data

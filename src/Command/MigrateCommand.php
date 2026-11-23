@@ -20,6 +20,7 @@ final class MigrateCommand extends ReleaseCommand
     {
         $this
             ->addOption('dir', 'd', InputOption::VALUE_REQUIRED, 'wallabag directory', '.')
+            ->addOption('pre', null, InputOption::VALUE_NONE, 'Migrate to the latest test version (alpha, beta or RC), on a copy of your instance only')
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Do not ask for confirmation');
         $this->configureReleaseOptions();
     }
@@ -73,12 +74,27 @@ final class MigrateCommand extends ReleaseCommand
             return self::FAILURE;
         }
 
-        $release = $this->fetchReleases($input)->newerThan($current, false)[0] ?? null;
+        $pre = (bool) $input->getOption('pre');
+        $release = $this->fetchReleases($input)->newerThan($current, $pre)[0] ?? null;
 
-        if (null === $release || version_compare($release['version'], '2.7.0', '<')) {
-            $io->error('No stable wallabag 2.7 release is available for this PHP version yet.');
+        if (null === $release || version_compare($release['version'], $pre ? '2.7.0-alpha.1' : '2.7.0', '<')) {
+            $io->error($pre ? 'No wallabag 2.7 release is available for this PHP version yet.' : 'No stable wallabag 2.7 release is available for this PHP version yet.');
 
             return self::FAILURE;
+        }
+
+        if ($release['prerelease']) {
+            $io->caution([
+                sprintf('wallabag %s is a test version: don\'t migrate the wallabag instance you use every day, migrate a copy of it, with a copy of its database.', $release['version']),
+                '"wallabin rollback" goes back to 2.6, but only a SQLite database is restored as it was before the migration.',
+                '"wallabin update" doesn\'t install newer test versions: this instance stays on this version until the stable 2.7.0 release.',
+            ]);
+
+            if (!$input->getOption('yes') && !$io->confirm('Is this a copy of your wallabag instance, made for testing?', false)) {
+                $io->text('Nothing changed.');
+
+                return self::FAILURE;
+            }
         }
 
         $database = $installation->sqliteDatabase($env['DATABASE_URL']);
