@@ -31,9 +31,8 @@ final class UpdateCommand extends ReleaseCommand
         }
 
         $releases = $this->fetchReleases($input);
-        $prereleases = $input->getOption('pre') || str_contains($current, '-');
-        $newer = $releases->newerThan($current, $prereleases);
-        $this->showUpdate($io, $releases, $current, $prereleases, $newer);
+        $newer = $releases->newerThan($current, false);
+        $this->showUpdate($io, $releases, $current, $newer);
 
         if ([] === $newer) {
             $io->success('wallabag is up to date.');

@@ -18,7 +18,8 @@ final class InstallCommand extends ReleaseCommand
     {
         $this
             ->addArgument('directory', InputArgument::OPTIONAL, 'Directory to install wallabag in, it must be empty or not exist', 'wallabag')
-            ->addOption('release', 'r', InputOption::VALUE_REQUIRED, 'Version to install, the latest one by default');
+            ->addOption('release', 'r', InputOption::VALUE_REQUIRED, 'Version to install, the latest stable one by default')
+            ->addOption('pre', null, InputOption::VALUE_NONE, 'Install the latest test version (alpha, beta or RC), it will not be updated by wallabin');
         $this->configureReleaseOptions();
     }
 

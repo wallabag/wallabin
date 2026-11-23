@@ -20,16 +20,28 @@ php wallabin.phar check --dir=wallabag
 php wallabin.phar update --dir=wallabag
 ```
 
-- `install` downloads the latest wallabag release, checks its SHA-256 checksum and extracts it in a new `wallabag` directory. Give another directory with `php wallabin.phar install /var/www/wallabag`, and another version with `--release=2.7.1`.
+- `install` downloads the latest stable wallabag release, checks its SHA-256 checksum and extracts it in a new `wallabag` directory. Give another directory with `php wallabin.phar install /var/www/wallabag`, and another version with `--release=2.7.1`.
 - `check` tells you if a newer version is available, without changing anything. It also tells you if the update fixes security issues, changes the database, or needs a newer PHP version.
 - `update` does what `make update` did in wallabag 2.6, in one command: it downloads the new release, replaces the files, runs the database migrations and clears the cache. If something fails, the previous files are restored. **Back up your database first**: it is not restored.
+
+### Test versions
+
+To try an alpha, a beta or a release candidate, install it in a new directory:
+
+```bash
+php wallabin.phar install --pre wallabag-test
+```
+
+Test versions are for fresh installs only: `check` and `update` only look for stable versions, so that an instance is never broken by a test version. An instance running a test version is updated with the next stable release.
+
+### Kept files
 
 `update` keeps these files: `.env.local`, `data/`, `var/`, `app/config/parameters.yml` and `web/assets/images/`. All other files are replaced by the ones of the new release.
 
 | Option | |
 |---|---|
-| `--dir` | wallabag directory, the current directory by default |
-| `--pre` | include alpha, beta and RC releases (always on when you run a pre-release) |
+| `--dir` | wallabag directory for `check` and `update`, the current directory by default |
+| `--pre` | install the latest test version (`install` only) |
 | `--releases-url` | URL of the list of releases, `https://wallabag.org/releases.json` by default |
 
 `check` exits with `0` when wallabag is up to date, `2` when an update is available and `1` on error.

@@ -14,7 +14,6 @@ abstract class ReleaseCommand extends Command
     protected function configureReleaseOptions(): void
     {
         $this
-            ->addOption('pre', null, InputOption::VALUE_NONE, 'Include alpha, beta and RC releases')
             ->addOption('releases-url', null, InputOption::VALUE_REQUIRED, 'URL of releases.json', Releases::URL);
     }
 
@@ -45,11 +44,15 @@ abstract class ReleaseCommand extends Command
     /**
      * @param list<array<string, mixed>> $releases
      */
-    protected function showUpdate(SymfonyStyle $io, Releases $all, string $current, bool $prereleases, array $releases): void
+    protected function showUpdate(SymfonyStyle $io, Releases $all, string $current, array $releases): void
     {
         $io->text(sprintf('Installed version: %s', $current));
 
-        foreach ($all->needingNewerPhp($current, $prereleases) as $release) {
+        if (str_contains($current, '-')) {
+            $io->note('wallabin only updates to stable versions. To try a newer test version, install a new instance with "wallabin install --pre".');
+        }
+
+        foreach ($all->needingNewerPhp($current, false) as $release) {
             $io->warning(sprintf('wallabag %s needs PHP %s or later, you run PHP %s.', $release['version'], $release['php_min'], \PHP_VERSION));
         }
 
