@@ -49,19 +49,25 @@ assert_data() {
     console dbal:run-sql "SELECT username FROM wallabag_user WHERE username = 'wallabag'" | grep -q wallabag || fail 'the user is lost'
 }
 
-assert_login_page() {
-    (cd "$WALLABAG/web" && exec $PHP -d display_errors=0 -S "127.0.0.1:$PORT" index.php >/dev/null 2>&1) &
-    local server=$! page=''
+assert_login() {
+    local directory=$1 password=$2 jar=$WORK/cookies token redirect
+
+    (cd "$directory/web" && exec $PHP -d display_errors=0 -S "127.0.0.1:$PORT" index.php >/dev/null 2>&1) &
+    local server=$!
 
     for _ in $(seq 1 30); do
-        page=$(curl -sf "http://127.0.0.1:$PORT/login" || true)
-        [ -n "$page" ] && break
+        token=$(curl -sf -c "$jar" -b "$jar" "http://127.0.0.1:$PORT/login" | grep -o 'name="_csrf_token" value="[^"]*"' | cut -d'"' -f4 || true)
+        [ -n "$token" ] && break
         sleep 1
     done
 
+    redirect=$(curl -s -c "$jar" -b "$jar" -o /dev/null -w '%{redirect_url}' --data-urlencode "_username=wallabag" --data-urlencode "_password=$password" --data-urlencode "_csrf_token=$token" "http://127.0.0.1:$PORT/login_check" || true)
     kill "$server"
     wait "$server" 2>/dev/null || true
-    grep -q '_csrf_token' <<< "$page" || fail 'the login page does not work'
+    rm -f "$jar"
+
+    [ -n "$token" ] || fail 'the login page does not work'
+    [ "http://127.0.0.1:$PORT/" = "$redirect" ] || fail "the login failed, redirected to '$redirect'"
 }
 
 package() {
@@ -93,6 +99,15 @@ step "Prepare the 2.7.0 and 2.7.1 packages"
 package 2.7.0
 package 2.7.1
 releases 2.7.0
+
+step "Install wallabag 2.7.0 with $DATABASE"
+case $DATABASE in
+    sqlite) FRESH_DATABASE=() ;;
+    *) FRESH_DATABASE=(--database-url="$SCHEME://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/wallabag_fresh_$$?charset=$CHARSET") ;;
+esac
+$WALLABIN install "$WORK/fresh" --no-interaction --url="http://127.0.0.1:$PORT" ${FRESH_DATABASE[@]+"${FRESH_DATABASE[@]}"} --admin-password='fresh pass' --releases-url="file://$RELEASES"
+grep -q "WALLABAG_BASE_URL=\"http://127.0.0.1:$PORT\"" "$WORK/fresh/.env.local" || fail 'WALLABAG_BASE_URL is wrong in .env.local'
+assert_login "$WORK/fresh" 'fresh pass'
 
 step "Install wallabag 2.6 with $DATABASE"
 tar -xzf "$PACKAGE_26" -C "$WORK"
@@ -137,7 +152,7 @@ assert_data
 [ ! -e "$WALLABAG/app/config/parameters.yml" ] || fail 'parameters.yml is still there'
 grep -q "DATABASE_URL=\"$SCHEME:" "$WALLABAG/.env.local" || fail 'DATABASE_URL is wrong in .env.local'
 grep -q 'APP_SECRET="e2e\\$secret"' "$WALLABAG/.env.local" || fail 'APP_SECRET is wrong in .env.local'
-assert_login_page
+assert_login "$WALLABAG" wallabag
 
 step "Check: up to date"
 wallabin check --releases-url="file://$RELEASES"
@@ -153,14 +168,14 @@ wallabin update --releases-url="file://$RELEASES" --yes
 assert_version 2.7.1
 assert_data
 [ -d "$WALLABAG/var/wallabin/backup-2.7.0" ] || fail 'no backup of 2.7.0'
-assert_login_page
+assert_login "$WALLABAG" wallabag
 
 step "Roll back to 2.7.0"
 wallabin rollback --yes
 assert_version 2.7.0
 assert_data
 [ ! -e "$WALLABAG/var/wallabin/backup-2.7.0" ] || fail 'the backup is still there'
-assert_login_page
+assert_login "$WALLABAG" wallabag
 
 step "Roll back again: no backup"
 if wallabin rollback --yes; then

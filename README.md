@@ -23,7 +23,7 @@ sudo -u www-data php wallabin.phar rollback --dir=wallabag
 ```
 
 - `requirements` checks that your server can run wallabag: PHP version, PHP extensions (with the driver of your database when wallabag is installed), the `tar` command and a writable directory. `install` and `update` run these checks first and stop if something is missing.
-- `install` downloads the latest stable wallabag release, checks its SHA-256 checksum and extracts it in a new `wallabag` directory. Give another directory with `php wallabin.phar install /var/www/wallabag`, and another version with `--release=2.7.1`.
+- `install` downloads the latest stable wallabag release, checks its SHA-256 checksum and extracts it in a new `wallabag` directory. Then it asks for the URL of your instance, your database and the password of the `wallabag` admin user, creates the database and the admin user. Give another directory with `php wallabin.phar install /var/www/wallabag`, and another version with `--release=2.7.1`.
 - `check` tells you if a newer version is available, without changing anything. It also tells you if the update fixes security issues, changes the database, or needs a newer PHP version.
 - `update` does what `make update` did in wallabag 2.6, in one command: it downloads the new release, replaces the files, runs the database migrations and clears the cache. If something fails, the previous files are restored.
 
@@ -40,6 +40,19 @@ Before replacing the files, `update` keeps a backup in `var/wallabin/backup-<ver
 `rollback` goes back to the version kept in this backup, and removes the backup. When the last update changed the database, a SQLite database goes back to its state before the update: everything saved since then is lost. MySQL, MariaDB and PostgreSQL databases are not restored: restore your own backup. `rollback` asks for a confirmation first, use `--yes` to skip it.
 
 wallabin can't back up MySQL, MariaDB or PostgreSQL databases. When an update changes the database, `update` asks you to confirm that you backed it up. Use `--yes` to skip this question, for example in a script.
+
+### Install without questions
+
+For a script, give the configuration as options:
+
+```bash
+php wallabin.phar install /var/www/wallabag --no-interaction \
+    --url=https://wallabag.example.org \
+    --database-url='mysql://wallabag:password@127.0.0.1:3306/wallabag?charset=utf8mb4' \
+    --admin-password='a long password'
+```
+
+Without `--database-url`, wallabag uses a SQLite database in `data/db/`. With MySQL, MariaDB or PostgreSQL, wallabin creates the database if it doesn't exist yet.
 
 ### Test versions
 
@@ -75,6 +88,7 @@ Update to the latest 2.6 version first. After the migration, check your web serv
 |---|---|
 | `--dir` | wallabag directory for `requirements`, `check`, `update`, `rollback` and `migrate`, the current directory by default |
 | `--pre` | install the latest test version (`install` only) |
+| `--url`, `--database-url`, `--admin-password` | configuration of a new instance (`install` only) |
 | `--yes` | don't ask for a confirmation (`update`, `rollback` and `migrate`) |
 | `--releases-url` | URL of the list of releases, `https://wallabag.org/releases.json` by default |
 
@@ -103,7 +117,7 @@ composer install
 vendor/bin/phpunit
 ```
 
-The end-to-end test installs wallabag 2.6, migrates it to 2.7, updates it and rolls it back, with SQLite, MySQL or PostgreSQL. It needs a wallabag 2.6 package and a 2.7 package:
+The end-to-end test installs wallabag 2.7 and logs in, installs wallabag 2.6, migrates it to 2.7, updates it and rolls it back, with SQLite, MySQL or PostgreSQL. It needs a wallabag 2.6 package and a 2.7 package:
 
 ```bash
 DATABASE=mysql DB_PASSWORD=root tests/e2e/run.sh wallabag-2.6.18.tar.gz wallabag-2.7.0.tar.gz

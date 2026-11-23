@@ -63,7 +63,7 @@ final class LegacyParameters
             }
         }
 
-        $env['DATABASE_URL'] = self::databaseUrl($value);
+        $env['DATABASE_URL'] = self::databaseUrl($parameters);
 
         if (\array_key_exists('redis_host', $parameters) || \array_key_exists('redis_path', $parameters)) {
             $env['REDIS_URL'] = self::redisUrl($value);
@@ -91,10 +91,11 @@ final class LegacyParameters
     }
 
     /**
-     * @param callable(string): string $value
+     * @param array<string, mixed> $parameters
      */
-    private static function databaseUrl(callable $value): string
+    public static function databaseUrl(array $parameters): string
     {
+        $value = static fn (string $key): string => (string) ($parameters[$key] ?? '');
         $scheme = match ($value('database_driver')) {
             'pdo_mysql' => 'mysql',
             'pdo_pgsql' => 'postgresql',
