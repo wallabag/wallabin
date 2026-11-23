@@ -111,6 +111,8 @@ abstract class ReleaseCommand extends Command
      */
     protected function upgrade(SymfonyStyle $io, Installation $installation, string $current, array $release, ?string $database, ?callable $afterReplace = null, ?callable $onFailure = null): int
     {
+        $this->warnIfUnsigned($io, $release);
+
         $wallabinDirectory = $installation->directory . '/var/wallabin';
         $workDirectory = $wallabinDirectory . '/work';
         $oldDirectory = $workDirectory . '/old';
@@ -163,6 +165,16 @@ abstract class ReleaseCommand extends Command
         $io->success(sprintf('wallabag is updated to %s. The files of wallabag %s%s are kept in %s.', $release['version'], $current, null !== $database ? ' and its database' : '', $backup));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param array<string, mixed> $release
+     */
+    protected function warnIfUnsigned(SymfonyStyle $io, array $release): void
+    {
+        if (null === ($release['signature_url'] ?? null)) {
+            $io->warning(sprintf('The wallabag %s package is not signed: only its SHA-256 checksum is checked.', $release['version']));
+        }
     }
 
     private function keepBackup(string $wallabinDirectory, string $version, string $oldDirectory, string $databaseCopy): string

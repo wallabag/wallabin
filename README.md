@@ -10,7 +10,13 @@ wallabin installs and updates [wallabag](https://wallabag.org) from version 2.7.
 curl -L -o wallabin.phar https://wallabag.org/wallabin
 ```
 
-A new binary is published with each [wallabin release](https://github.com/wallabag/wallabin/releases).
+A new binary is published with each [wallabin release](https://github.com/wallabag/wallabin/releases), with its minisign signature. Update it with:
+
+```bash
+php wallabin.phar self-update
+```
+
+`self-update` downloads the latest wallabin release, checks its signature and replaces `wallabin.phar`.
 
 ## Usage
 
@@ -100,13 +106,17 @@ wallabin needs the same PHP version as wallabag 2.7: PHP 8.2 or later (tested wi
 
 wallabin reads [releases.json](https://wallabag.org/releases.json) on wallabag.org. This file lists the releases from 2.7.0, with their package and its SHA-256 checksum. Your instance sends no information: wallabin downloads the whole file and compares it with the installed version.
 
+The wallabag packages and the wallabin binaries are signed with [minisign](https://jedisct1.github.io/minisign/). wallabin checks the signature of each package with the wallabag public key it contains, and refuses a package whose signature doesn't match. Packages released before the signatures are only checked with their SHA-256 checksum, with a warning. You can check a package yourself:
+
+```bash
+minisign -V -P RWQT4s5qtqdNSaZOi9peL3i+pP/KMMzpk/c9XJd84ZIpxFWaGqYOlwy+ -m wallabag-2.7.0.tar.gz
+```
+
 wallabag 2.6 is migrated to 2.7 with `migrate`. Older versions must be updated to 2.6 first.
 
 ## Roadmap
 
 - back up MySQL, MariaDB and PostgreSQL databases before an update
-- `self-update`: update wallabin itself
-- signed packages
 
 See [wallabag/wallabag#9209](https://github.com/wallabag/wallabag/issues/9209) and [wallabag/wallabag#9212](https://github.com/wallabag/wallabag/issues/9212).
 

@@ -29,7 +29,16 @@ jobs:
 
       - run: php build/wallabin.phar --version
 
-      - run: gh release upload "$TAG" build/wallabin.phar --clobber
+      - run: |
+          sudo apt-get update -q && sudo apt-get install -yq minisign
+          printf '%s\n' "$MINISIGN_SECRET_KEY" > "$RUNNER_TEMP/minisign.key"
+          minisign -S -s "$RUNNER_TEMP/minisign.key" -m build/wallabin.phar -t "wallabin $TAG"
+          rm "$RUNNER_TEMP/minisign.key"
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+          TAG: ${{ github.event.release.tag_name }}
+
+      - run: gh release upload "$TAG" build/wallabin.phar build/wallabin.phar.minisig --clobber
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}

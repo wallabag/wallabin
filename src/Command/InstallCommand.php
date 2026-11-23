@@ -76,6 +76,7 @@ final class InstallCommand extends ReleaseCommand
             return self::FAILURE;
         }
 
+        $this->warnIfUnsigned($io, $release);
         $io->text(sprintf('Downloading wallabag %s…', $release['version']));
         $workDirectory = \dirname($directory) . '/.wallabin-' . bin2hex(random_bytes(4));
 

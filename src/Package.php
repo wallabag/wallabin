@@ -21,6 +21,10 @@ final class Package
             throw new \RuntimeException(sprintf('The SHA-256 checksum of the wallabag %s package doesn\'t match: the download is corrupted.', $release['version']));
         }
 
+        if (null !== ($release['signature_url'] ?? null)) {
+            Signature::verify($archive, Http::get($release['signature_url']));
+        }
+
         mkdir($workDirectory . '/extract');
         (new Process(['tar', '-xzf', $archive, '-C', $workDirectory . '/extract'], null, null, null, 600))->mustRun();
         unlink($archive);

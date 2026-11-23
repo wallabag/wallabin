@@ -9,6 +9,7 @@ use Wallabag\Wallabin\Command\InstallCommand;
 use Wallabag\Wallabin\Command\MigrateCommand;
 use Wallabag\Wallabin\Command\RequirementsCommand;
 use Wallabag\Wallabin\Command\RollbackCommand;
+use Wallabag\Wallabin\Command\SelfUpdateCommand;
 use Wallabag\Wallabin\Command\UpdateCommand;
 
 $application = new Application('wallabin', '@package_version@');
@@ -17,5 +18,6 @@ $application->add(new CheckCommand());
 $application->add(new UpdateCommand());
 $application->add(new RollbackCommand());
 $application->add(new MigrateCommand());
+$application->add(new SelfUpdateCommand());
 $application->add(new RequirementsCommand());
 $application->run();
