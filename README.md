@@ -94,7 +94,7 @@ sudo -u www-data php wallabin.phar migrate --pre --dir=/var/www/wallabag-copy
 
 wallabin asks you to confirm that you migrate a copy. `rollback` goes back to 2.6, but only a SQLite database is restored as it was before the migration. The migrated instance stays on this test version: `update` only installs stable versions, so it moves to the stable 2.7.0 release when it's out.
 
-Before the migration, update wallabag to the latest 2.6 patch version (2.6.18 or later) with `make update`. After the migration, check your web server configuration: the built assets moved from `web/wallassets/` to `web/build/`, and `web/index.php` is the new front controller (`web/app.php` still works). See the [upgrade documentation](https://doc.wallabag.org/admin/upgrade/).
+Before the migration, update wallabag to the latest 2.6 patch version (2.6.19 or later) with `make update`. After the migration, check your web server configuration: the built assets moved from `web/wallassets/` to `web/build/`, and `web/index.php` is the new front controller (`web/app.php` still works). See the [upgrade documentation](https://doc.wallabag.org/admin/upgrade/).
 
 ### Kept files
 
