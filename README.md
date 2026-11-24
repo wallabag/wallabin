@@ -4,6 +4,8 @@ wallabin installs and updates [wallabag](https://wallabag.org) from version 2.7.
 
 ⚠️ Work in progress: this first version is kept as simple as possible.
 
+⚠️ wallabag 2.7 needs **PHP 8.2, 8.3 or 8.4**. PHP 8.5 is not supported yet: run wallabin with one of these versions, for example `php8.4 wallabin.phar install`.
+
 ## Download
 
 ```bash
@@ -108,9 +110,9 @@ Before the migration, update wallabag to the latest 2.6 patch version (2.6.18 or
 
 `check` exits with `0` when wallabag is up to date, `2` when an update is available and `1` on error.
 
-wallabin needs the same PHP version as wallabag 2.7: PHP 8.2 or later (tested with 8.2, 8.3 and 8.4), with the `curl` extension, and the `tar` command.
+wallabin needs the same PHP version as wallabag 2.7: PHP 8.2, 8.3 or 8.4, with the `curl` extension, and the `tar` command.
 
-PHP 8.5 is not supported yet by wallabag 2.7: on PHP 8.5, the installation can fail at the end, when wallabag builds its cache (`Allowed memory size … exhausted`). Use PHP 8.2, 8.3 or 8.4, for example with `php8.4 wallabin.phar install`. Also check that `php` on the command line is the same version as the one of your web server.
+PHP 8.5 is not supported yet by wallabag 2.7: on PHP 8.5, the installation can fail at the end, when wallabag builds its cache (`Allowed memory size … exhausted`). Also check that `php` on the command line is the same version as the one of your web server.
 
 ## How it works
 
