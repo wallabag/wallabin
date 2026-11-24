@@ -128,11 +128,13 @@ final class Installation
      */
     public function console(array $arguments): void
     {
-        $process = new Process([\PHP_BINARY, 'bin/console', ...$arguments, '--env=prod', '--no-interaction'], $this->directory, ['APP_ENV' => 'prod'], null, 3600);
+        $process = new Process([\PHP_BINARY, '-d', 'error_reporting=' . (\E_ALL & ~\E_DEPRECATED & ~\E_USER_DEPRECATED), 'bin/console', ...$arguments, '--env=prod', '--no-interaction'], $this->directory, ['APP_ENV' => 'prod'], null, 3600);
         $process->run();
 
         if (!$process->isSuccessful()) {
-            throw new \RuntimeException(sprintf("bin/console %s failed:\n%s", implode(' ', $arguments), trim($process->getErrorOutput() ?: $process->getOutput())));
+            $lines = array_filter(preg_split('/\R/', $process->getErrorOutput() . "\n" . $process->getOutput()), static fn (string $line): bool => '' !== trim($line) && !str_contains($line, 'Deprecated:'));
+
+            throw new \RuntimeException(sprintf("bin/console %s failed:\n%s", implode(' ', $arguments), implode("\n", \array_slice($lines, -20))));
         }
     }
 }
