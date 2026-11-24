@@ -8,7 +8,7 @@ final class Requirements
 {
     public const PHP_MIN = '8.2';
 
-    public const EXTENSIONS = ['ctype', 'curl', 'dom', 'filter', 'gd', 'hash', 'iconv', 'intl', 'json', 'libxml', 'mbstring', 'pcre', 'pdo', 'session', 'simplexml', 'tidy', 'tokenizer', 'xml'];
+    public const EXTENSIONS = ['ctype', 'curl', 'dom', 'fileinfo', 'filter', 'gd', 'hash', 'iconv', 'intl', 'json', 'libxml', 'mbstring', 'pcre', 'pdo', 'session', 'simplexml', 'tidy', 'tokenizer', 'xml', 'zip'];
 
     public const DATABASE_DRIVERS = ['sqlite' => 'pdo_sqlite', 'mysql' => 'pdo_mysql', 'pgsql' => 'pdo_pgsql', 'postgres' => 'pdo_pgsql', 'postgresql' => 'pdo_pgsql'];
 
